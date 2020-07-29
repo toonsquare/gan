@@ -11,7 +11,14 @@ image_file = glob.glob('./data/train/*.png')
 # %% [code]
 IMG_WIDTH = 256
 IMG_HEIGHT = 256
-LOOP_TO_SAVE = 1;
+LOOP_TO_SAVE = 1
+
+# builder = tf.compat.v1.saved_model.builder.SavedModelBuilder('./model')
+# sess = tf.compat.v1.InteractiveSession()
+
+checkpoint_dir = './Sketch2Color_training_checkpoints'
+last_checkpoint_dir = './Sketch2Color_training_checkpoints999'
+checkpoint = tf.train.Checkpoint()
 
 
 # %% [code]
@@ -350,8 +357,8 @@ def fit(train_ds, epochs, test_ds):
             checkpoint_prefix = os.path.join(checkpoint_dir + str(epoch), "ckpt")
             checkpoint.save(file_prefix=checkpoint_prefix)
 
-        print ('Time taken for epoch {} is {} sec\n'.format(epoch + 1,
-                                                            time.time() - start))
+        print('Time taken for epoch {} is {} sec\n'.format(epoch + 1,
+                                                           time.time() - start))
     # checkpoint.save(file_prefix = checkpoint_prefix)
 
 
@@ -359,14 +366,17 @@ def fit(train_ds, epochs, test_ds):
 EPOCHS = 1000
 
 # %% [code]
-fit(train_dataset, EPOCHS, test_dataset)
+# fit(train_dataset, EPOCHS, test_dataset)
 
+print("restore ckpt")
 # # %% [code]
-# checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
+checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
 #
-# for example_input, example_target in test_dataset.take(5):
-#     generate_images(generator, example_input, example_target)
+for example_input, example_target in test_dataset.take(5):
+    print(example_input.shape)
+    print(example_target.shape)
+    generate_images(generator, example_input, example_target)
 
-generator.save('ColorizationModelv1.h5')
+# generator.save('ColorizationModelv1.h5')
 
 # %% [code]
