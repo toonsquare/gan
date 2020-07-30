@@ -8,6 +8,10 @@ from matplotlib import pyplot as plt
 from PIL import Image
 from io import BytesIO
 import numpy as np
+import glob
+
+BATCH_SIZE = 1
+BUFFER_SIZE = 1000
 
 IMG_WIDTH = 256
 IMG_HEIGHT = 256
@@ -15,6 +19,9 @@ LOOP_TO_SAVE = 1
 
 app = Flask(__name__)
 json = FlaskJSON(app)
+
+val_file = glob.glob('./data/val/*.png')
+
 
 app.debug = True
 
@@ -28,9 +35,19 @@ CORS = {
 
 OUTPUT_CHANNELS = 3
 
-checkpoint_dir = "./model"
+checkpoint_dir = "./model/ckpt-100"
 checkpoint = tf.train.Checkpoint()
-checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
+checkpoint.restore(checkpoint_dir)
+
+
+def load_image_test(image_file):
+    input_image, real_image = load(image_file)
+    input_image, real_image = resize(input_image, real_image,
+                                     256, 256)
+    input_image, real_image = normalize(input_image, real_image)
+
+    return input_image, real_image
+
 
 def resize(input_image, real_image, height, width):
     input_image = tf.image.resize(input_image, [height, width], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
@@ -58,9 +75,9 @@ def normalize(input_image, real_image):
 
 
 def load(image_file):
-    # image = tf.io.read_file(image_file)
-    image = image_file
-    # image = tf.image.decode_jpeg(image, channels=3)
+    image = tf.io.read_file(image_file)
+    # image = image_file
+    image = tf.image.decode_jpeg(image, channels=3)
 
     w = tf.shape(image)[1]
     w = w // 2
@@ -167,24 +184,27 @@ def buildGenerator():
 
     return tf.keras.Model(inputs=inputs, outputs=x)
 
-
+@tf.function
 def generate_images(model, test_input, tar):
-    prediction = model(test_input, training=True)
+    prediction = model(test_input, training=False)
+    print(prediction.shape)
+    print(type(prediction))
     plt.figure(figsize=(15, 15))
 
     display_list = [test_input[0], tar[0], prediction[0]]
     title = ['Input Image', 'Ground Truth', 'Predicted Image']
 
-    for i in range(3):
-        plt.subplot(1, 3, i + 1)
-        plt.title(title[i])
-        plt.imshow(display_list[i] * 0.5 + 0.5)
-        plt.axis('off')
+    # for i in range(3):
+    #     plt.subplot(1, 3, i + 1)
+    #     plt.title(title[i])
+    #     plt.imshow(display_list[i] * 0.5 + 0.5)
+    #     plt.axis('off')
+    #
+    # plt.savefig('image_at_epoch_{:04d}.png'.format('prediction'))
 
-    plt.savefig('image_at_epoch_{:04d}.png'.format('prediction'))
-
-
-
+test_dataset = tf.data.Dataset.from_tensor_slices(val_file)
+test_dataset = test_dataset.map(load_image_test)
+test_dataset = test_dataset.batch(BATCH_SIZE)
 generator = buildGenerator()
 
 
@@ -194,14 +214,16 @@ def index():
         app.logger.debug("prediction start")
         upload = request.files['file']
         img = Image.open(upload)
-        sketch, target = load_image_test(np.array(img))
-
-        sketch = np.array([sketch])
-        target = np.array([target])
-        # app.logger.debug(content['input'])
-        print(sketch.shape)
-        print(target.shape)
-        generate_images(generator, sketch, target)
+        # sketch, target = load_image_test(np.array(img))
+        #
+        # sketch = np.array([sketch])
+        # target = np.array([target])
+        # # app.logger.debug(content['input'])
+        # print(sketch.shape)
+        # print(target.shape)
+        for example_input, example_target in test_dataset.take(1):
+            generate_images(generator, example_input, example_target)
+        # generate_images(generator, sketch, target)
 
         # results = {"prediction" : content['input']}
 
