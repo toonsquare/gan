@@ -22,7 +22,6 @@ json = FlaskJSON(app)
 
 val_file = glob.glob('./data/val/*.png')
 
-
 app.debug = True
 
 app.config['JSON_ADD_STATUS'] = False
@@ -184,27 +183,37 @@ def buildGenerator():
 
     return tf.keras.Model(inputs=inputs, outputs=x)
 
-@tf.function
+
+@tf.function()
 def generate_images(model, test_input, tar):
     prediction = model(test_input, training=False)
-    print(prediction.shape)
-    print(type(prediction))
-    plt.figure(figsize=(15, 15))
-
-    display_list = [test_input[0], tar[0], prediction[0]]
-    title = ['Input Image', 'Ground Truth', 'Predicted Image']
-
+    print(prediction[0])
+    print(type(prediction[0].numpy()))
+    # img = Image.fromarray(prediction[0])
+    # img.save("./prediction.jpg")
+    # prediction[0] = tf.image.convert_image_dtype(prediction[0], dtype=tf.uint8)
+    # tf.io.encode_jpeg(prediction[0])
+    # print(prediction[0].shape)
+    # print(type(prediction[0]))
+    # plt.figure(figsize=(15, 15))
+    #
+    # display_list = [test_input[0], tar[0], prediction[0]]
+    # title = ['Input Image', 'Ground Truth', 'Predicted Image']
+    #
     # for i in range(3):
     #     plt.subplot(1, 3, i + 1)
     #     plt.title(title[i])
-    #     plt.imshow(display_list[i] * 0.5 + 0.5)
+    #     plt.imshow(display_list[i])
     #     plt.axis('off')
     #
     # plt.savefig('image_at_epoch_{:04d}.png'.format('prediction'))
 
+
 test_dataset = tf.data.Dataset.from_tensor_slices(val_file)
 test_dataset = test_dataset.map(load_image_test)
 test_dataset = test_dataset.batch(BATCH_SIZE)
+
+global generator
 generator = buildGenerator()
 
 
