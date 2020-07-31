@@ -4,12 +4,11 @@ import os
 import glob
 import time
 from matplotlib import pyplot as plt
-% matplotlib
-inline
+
 
 # %% [code]
-image_file = glob.glob('../input/anime-sketch-colorization-pair/data/train/*.png')
-
+image_file = glob.glob('./data/train/*.png')
+print(image_file)
 # %% [code]
 IMG_WIDTH = 256
 IMG_HEIGHT = 256
@@ -100,7 +99,7 @@ train_dataset = train_dataset.map(load_image_train, num_parallel_calls=tf.data.e
 train_dataset = train_dataset.shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
 
 # %% [code]
-val_file = glob.glob('../input/anime-sketch-colorization-pair/data/val/*.png')
+val_file = glob.glob('./val/*.png')
 
 # %% [code]
 test_dataset = tf.data.Dataset.from_tensor_slices(val_file)
@@ -283,7 +282,7 @@ generator_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
 discriminator_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
 
 # %% [code]
-checkpoint_dir = '.../output/kaggle/working/'
+checkpoint_dir = './model'
 checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
 checkpoint = tf.train.Checkpoint(generator_optimizer=generator_optimizer,
                                  discriminator_optimizer=discriminator_optimizer,
@@ -378,12 +377,10 @@ export_path = os.path.join(MODEL_DIR, str(version))
 print('export_path={}\n'.format(export_path))
 tf.saved_model.save(generator, export_path)
 print('\nSaved model:')
-!ls - 1
-{export_path}
 
-#identifying pb file signatures
-!saved_model_cli
-show - -dir / tmp / 1 - -tag_set
-serve - -signature_def
-serving_default
-
+# #identifying pb file signatures
+# !saved_model_cli
+# show - -dir / tmp / 1 - -tag_set
+# serve - -signature_def
+# serving_default
+#
