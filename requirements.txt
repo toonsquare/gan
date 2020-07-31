@@ -1,0 +1,4 @@
+matplotlib
+flask
+flask_json
+Pillow
