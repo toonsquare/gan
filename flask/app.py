@@ -193,19 +193,8 @@ def buildGenerator():
 
 
 def generate_images(model, test_input, tar):
-    print(test_input.shape)
     prediction = model(test_input, training=False)
-    print(prediction)
     denomalziedImage = prediction.numpy()
-    print(prediction.numpy().shape)
-    print(denomalziedImage.shape)
-    # img = Image.fromarray(prediction[0].numpy())
-    # img.save("./prediction.jpg")
-    # prediction[0] = tf.image.convert_image_dtype(prediction[0], dtype=tf.uint8)
-    # tf.io.encode_jpeg(prediction[0])
-    # print(prediction[0].shape)
-    # print(type(prediction[0]))
-    # plt.figure(figsize=(15, 15))
     print("------test image--------")
     print(test_input[0].shape)
     print("------target--------")
@@ -216,7 +205,6 @@ def generate_images(model, test_input, tar):
     # print(denomalziedImage)
 
     display_list = [test_input[0], tar[0], denomalziedImage[0]]
-    # display_list = [test_input[0], tar[0], prediction[0].numpy()]
     title = ['Input Image', 'Ground Truth', 'Predicted Image']
 
     for i in range(3):
@@ -255,7 +243,7 @@ def index():
         # # app.logger.debug(content['input'])
         # print(sketch.shape)
         # print(target.shape)
-        for example_input, example_target in test_dataset.take(5):
+        for example_input, example_target in test_dataset.take(1):
             generate_images(generator, example_input, example_target)
         # generate_images(generator, sketch, target)
 
