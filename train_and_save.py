@@ -97,7 +97,7 @@ def load_image_test(image_file):
 
 
 # %% [code]
-BATCH_SIZE = 50
+BATCH_SIZE = 5
 BUFFER_SIZE = 1000
 
 # %% [code]
@@ -148,7 +148,7 @@ def upsample(filters, size, shape, apply_dropout=False):
     if apply_dropout:
         result.add(tf.keras.layers.Dropout(0.5))
 
-    result.add(tf.keras.layers.ReLU())
+    result.add(tf.keras.layers.LeakyReLU())
 
     return result
 
@@ -206,7 +206,7 @@ def buildGenerator():
 generator = buildGenerator()
 
 # %% [code]
-LAMBDA = 100
+LAMBDA = 10
 
 
 # %% [code]
@@ -285,8 +285,8 @@ def discriminator_loss(disc_real_output, disc_generated_output):
 
 
 # %% [code]
-generator_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
-discriminator_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
+generator_optimizer = tf.keras.optimizers.Adam(1e-4, beta_1=0.5)
+discriminator_optimizer = tf.keras.optimizers.Adam(1e-4, beta_1=0.5)
 
 # %% [code]
 checkpoint_dir = './Sketch2Color_training_checkpoints'
