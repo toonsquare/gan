@@ -20,7 +20,7 @@ LOOP_TO_SAVE = 1
 app = Flask(__name__)
 json = FlaskJSON(app)
 
-val_file = glob.glob('./data/val/*.png')
+val_file = glob.glob('../data/val/*.png')
 
 app.debug = True
 
@@ -34,7 +34,7 @@ CORS = {
 
 OUTPUT_CHANNELS = 3
 
-checkpoint_dir = "./model/ckpt-100"
+checkpoint_dir = "../model/ckpt-100"
 checkpoint = tf.train.Checkpoint()
 checkpoint.restore(checkpoint_dir)
 
@@ -71,6 +71,11 @@ def normalize(input_image, real_image):
     real_image = (real_image / 127.5) - 1
 
     return input_image, real_image
+
+
+def denormalize(image_file):
+    image_file = (image_file + 1) * 127.5
+    return image_file
 
 
 def load(image_file):
@@ -184,12 +189,11 @@ def buildGenerator():
     return tf.keras.Model(inputs=inputs, outputs=x)
 
 
-@tf.function()
 def generate_images(model, test_input, tar):
     prediction = model(test_input, training=False)
-    print(prediction[0])
+    print(prediction[0].numpy())
     print(type(prediction[0].numpy()))
-    # img = Image.fromarray(prediction[0])
+    # img = Image.fromarray(prediction[0].numpy())
     # img.save("./prediction.jpg")
     # prediction[0] = tf.image.convert_image_dtype(prediction[0], dtype=tf.uint8)
     # tf.io.encode_jpeg(prediction[0])
@@ -197,16 +201,16 @@ def generate_images(model, test_input, tar):
     # print(type(prediction[0]))
     # plt.figure(figsize=(15, 15))
     #
-    # display_list = [test_input[0], tar[0], prediction[0]]
-    # title = ['Input Image', 'Ground Truth', 'Predicted Image']
+    display_list = [test_input[0], tar[0], denormalize(prediction[0].numpy())]
+    title = ['Input Image', 'Ground Truth', 'Predicted Image']
+
+    for i in range(3):
+        plt.subplot(1, 3, i + 1)
+        plt.title(title[i])
+        plt.imshow(display_list[i])
+        plt.axis('off')
     #
-    # for i in range(3):
-    #     plt.subplot(1, 3, i + 1)
-    #     plt.title(title[i])
-    #     plt.imshow(display_list[i])
-    #     plt.axis('off')
-    #
-    # plt.savefig('image_at_epoch_{:04d}.png'.format('prediction'))
+    plt.savefig('prediction.png'.format('prediction'))
 
 
 test_dataset = tf.data.Dataset.from_tensor_slices(val_file)
