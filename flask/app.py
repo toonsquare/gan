@@ -207,13 +207,17 @@ def generate_images(model, test_input, tar):
     display_list = [test_input[0], tar[0], denomalziedImage[0]]
     title = ['Input Image', 'Ground Truth', 'Predicted Image']
 
-    for i in range(3):
-        plt.subplot(1, 3, i + 1)
-        plt.title(title[i])
-        plt.imshow(display_list[i])
-        plt.axis('off')
-    #
-    plt.savefig('prediction.png'.format('prediction'))
+    # for i in range(3):
+    #     plt.subplot(1, 3, i + 1)
+    #     plt.title(title[i])
+    #     plt.imshow(display_list[i])
+    #     plt.axis('off')
+    # #
+    # plt.savefig('prediction.png'.format('prediction'))
+
+    plt.imshow(denomalziedImage[0])
+    plt.axis('off')
+    plt.savefig('prediction_only.png')
 
 
 test_dataset = tf.data.Dataset.from_tensor_slices(val_file)
