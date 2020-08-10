@@ -353,9 +353,8 @@ def fit(train_ds, epochs, test_ds):
             train_step(input_image, target, epoch)
         print()
 
-        if (epoch + 1) % LOOP_TO_SAVE == 0:
-            checkpoint_prefix = os.path.join(checkpoint_dir + str(epoch), "ckpt")
-            checkpoint.save(file_prefix=checkpoint_prefix)
+        checkpoint_prefix = os.path.join(checkpoint_dir + "_" + str(epoch))
+        checkpoint.save(file_prefix=checkpoint_prefix)
 
         print('Time taken for epoch {} is {} sec\n'.format(epoch + 1,
                                                            time.time() - start))
