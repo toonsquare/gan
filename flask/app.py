@@ -22,8 +22,6 @@ LOOP_TO_SAVE = 1
 app = Flask(__name__)
 json = FlaskJSON(app)
 
-val_file = glob.glob('../data/val/*.png')
-
 app.debug = True
 
 app.config['JSON_ADD_STATUS'] = False
@@ -35,11 +33,6 @@ CORS = {
 }
 
 OUTPUT_CHANNELS = 3
-
-
-# checkpoint_dir = "../model/ckpt-100"
-# checkpoint = tf.train.Checkpoint()
-# checkpoint.restore(checkpoint_dir)
 
 
 def load_image_test(image_file):
@@ -76,11 +69,6 @@ def normalize(input_image, real_image):
     return input_image, real_image
 
 
-def denormalize(image_file):
-    image_file = (image_file + 1) * 127.5
-    return image_file
-
-
 def load(image_file):
     image = tf.io.read_file(image_file)
     # image = image_file
@@ -94,15 +82,6 @@ def load(image_file):
 
     input_image = tf.cast(input_image, tf.float32)
     real_image = tf.cast(real_image, tf.float32)
-
-    return input_image, real_image
-
-
-def load_image_test(image_file):
-    input_image, real_image = load(image_file)
-    input_image, real_image = resize(input_image, real_image,
-                                     256, 256)
-    input_image, real_image = normalize(input_image, real_image)
 
     return input_image, real_image
 
@@ -194,17 +173,9 @@ def buildGenerator():
 
 def generate_images(model, test_input, tar):
     prediction = model(test_input, training=False)
-    denomalziedImage = prediction.numpy()
-    print("------test image--------")
-    print(test_input[0].shape)
-    print("------target--------")
-    print(tar[0].shape)
-    # print(tar[0])
-    print("------de image--------")
-    print(denomalziedImage[0].shape)
-    # print(denomalziedImage)
+    PredictionImage = prediction.numpy()
 
-    display_list = [test_input[0], tar[0], denomalziedImage[0]]
+    display_list = [test_input[0], tar[0], PredictionImage[0]]
     title = ['Input Image', 'Ground Truth', 'Predicted Image']
 
     # for i in range(3):
@@ -215,21 +186,31 @@ def generate_images(model, test_input, tar):
     # #
     # plt.savefig('prediction.png'.format('prediction'))
 
-    plt.imshow(denomalziedImage[0])
+    plt.imshow(PredictionImage[0])
     plt.axis('off')
     plt.savefig('prediction_only.png')
 
 
-test_dataset = tf.data.Dataset.from_tensor_slices(val_file)
-test_dataset = test_dataset.map(load_image_test)
-test_dataset = test_dataset.batch(BATCH_SIZE)
+#   return "base64"
+
+def generate_images_v2(model, test_input):
+    prediction = model(test_input, training=False)
+    PredictionImage = prediction.numpy()
+
+    plt.imshow(PredictionImage[0])
+    plt.axis('off')
+    plt.savefig('prediction_only.png')
+
+    # todo base64 return
+    return "base64"
+
 
 global generator
 generator = buildGenerator()
 
 checkpoint_dir = "../model/ckpt-100"
 checkpoint = tf.train.Checkpoint(
-    generator=generator,
+    generator=generator
 )
 checkpoint.restore(checkpoint_dir)
 
@@ -239,21 +220,16 @@ def index():
     if request.method == 'POST':
         app.logger.debug("prediction start")
         upload = request.files['file']
-        img = Image.open(upload)
-        # sketch, target = load_image_test(np.array(img))
-        #
-        # sketch = np.array([sketch])
-        # target = np.array([target])
-        # # app.logger.debug(content['input'])
-        # print(sketch.shape)
-        # print(target.shape)
-        for example_input, example_target in test_dataset.take(1):
-            generate_images(generator, example_input, example_target)
-        # generate_images(generator, sketch, target)
-
-        # results = {"prediction" : content['input']}
-
-        return json_response(data_={}, headers_=CORS)
+        print(upload.filename)
+        upload_data = upload.read()
+        print(upload_data)
+        img = Image.open(BytesIO(upload_data))
+        npimg = np.array(img)
+        base64 = generate_images_v2(generator, [npimg])
+        base64 = ""
+        return json_response(data_={
+            "base64": base64
+        }, headers_=CORS)
 
 
 if __name__ == '__main__':
