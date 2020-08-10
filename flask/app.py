@@ -35,55 +35,54 @@ CORS = {
 OUTPUT_CHANNELS = 3
 
 
-def load_image_test(image_file):
-    input_image, real_image = load(image_file)
-    input_image, real_image = resize(input_image, real_image,
-                                     256, 256)
-    input_image, real_image = normalize(input_image, real_image)
-
-    return input_image, real_image
-
-
-def resize(input_image, real_image, height, width):
-    input_image = tf.image.resize(input_image, [height, width], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
-    real_image = tf.image.resize(real_image, [height, width],
-                                 method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
-
-    return input_image, real_image
+# def load_image_test(image_file):
+#    input_image, real_image = load(image_file)
+#    input_image, real_image = resize(input_image, real_image,
+#                                     256, 256)
+#    input_image, real_image = normalize(input_image, real_image)
+#
+#    return input_image, real_image
 
 
-# %% [code]
-def random_crop(input_image, real_image):
-    stacked_image = tf.stack([input_image, real_image], axis=0)
-    cropped_image = tf.image.random_crop(
-        stacked_image, size=[2, IMG_HEIGHT, IMG_WIDTH, 3])
-
-    return cropped_image[0], cropped_image[1]
+# def resize(input_image, real_image, height, width):
+#    input_image = tf.image.resize(input_image, [height, width], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+#    real_image = tf.image.resize(real_image, [height, width],
+#                                 method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+#
+#    return input_image, real_image
 
 
 # %% [code]
-def normalize(input_image, real_image):
-    input_image = (input_image / 127.5) - 1
-    real_image = (real_image / 127.5) - 1
+# def random_crop(input_image, real_image):
+#    stacked_image = tf.stack([input_image, real_image], axis=0)
+#    cropped_image = tf.image.random_crop(
+#        stacked_image, size=[2, IMG_HEIGHT, IMG_WIDTH, 3])
+#
+#    return cropped_image[0], cropped_image[1]
 
-    return input_image, real_image
+
+# %% [code]
+# def normalize(input_image, real_image):
+#    input_image = (input_image / 127.5) - 1
+#    real_image = (real_image / 127.5) - 1
+
+#    return input_image, real_image
 
 
-def load(image_file):
-    image = tf.io.read_file(image_file)
-    # image = image_file
-    image = tf.image.decode_jpeg(image, channels=3)
-
-    w = tf.shape(image)[1]
-    w = w // 2
-
-    real_image = image[:, :w, :]
-    input_image = image[:, w:, :]
-
-    input_image = tf.cast(input_image, tf.float32)
-    real_image = tf.cast(real_image, tf.float32)
-
-    return input_image, real_image
+# def load(image_file):
+#    image = tf.io.read_file(image_file)
+#    image = tf.image.decode_jpeg(image, channels=3)
+#
+#    w = tf.shape(image)[1]
+#    w = w // 2
+#
+#    real_image = image[:, :w, :]
+#    input_image = image[:, w:, :]
+#
+#    input_image = tf.cast(input_image, tf.float32)
+#    real_image = tf.cast(real_image, tf.float32)
+#
+#    return input_image, real_image
 
 
 def downsample(filters, size, shape, apply_batchnorm=True):
@@ -171,35 +170,18 @@ def buildGenerator():
     return tf.keras.Model(inputs=inputs, outputs=x)
 
 
-def generate_images(model, test_input, tar):
-    prediction = model(test_input, training=False)
-    PredictionImage = prediction.numpy()
-
-    display_list = [test_input[0], tar[0], PredictionImage[0]]
-    title = ['Input Image', 'Ground Truth', 'Predicted Image']
-
-    # for i in range(3):
-    #     plt.subplot(1, 3, i + 1)
-    #     plt.title(title[i])
-    #     plt.imshow(display_list[i])
-    #     plt.axis('off')
-    # #
-    # plt.savefig('prediction.png'.format('prediction'))
-
-    plt.imshow(PredictionImage[0])
-    plt.axis('off')
-    plt.savefig('prediction_only.png')
-
-
-#   return "base64"
-
 def generate_images_v2(model, test_input):
     prediction = model(test_input, training=False)
     PredictionImage = prediction.numpy()
 
-    plt.imshow(PredictionImage[0])
+    print(test_input[0].shape)
+    plt.imshow(test_input[0])
     plt.axis('off')
-    plt.savefig('prediction_only.png')
+    plt.savefig('test_input.png')
+    #
+    # plt.imshow(PredictionImage[0])
+    # plt.axis('off')
+    # plt.savefig('prediction_only.png')
 
     # todo base64 return
     return "base64"
@@ -222,10 +204,14 @@ def index():
         upload = request.files['file']
         print(upload.filename)
         upload_data = upload.read()
-        print(upload_data)
+        # print(upload_data)
         img = Image.open(BytesIO(upload_data))
         npimg = np.array(img)
-        base64 = generate_images_v2(generator, [npimg])
+        npimg = np.reshape(npimg, ((1, 256, 256, 3)))
+        print(npimg.shape)
+        # print(npimg)
+        base64 = generate_images_v2(generator, npimg)
+
         base64 = ""
         return json_response(data_={
             "base64": base64
