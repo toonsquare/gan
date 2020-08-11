@@ -97,7 +97,7 @@ def load_image_test(image_file):
 
 
 # %% [code]
-BATCH_SIZE = 5
+BATCH_SIZE = 50
 BUFFER_SIZE = 1000
 
 # %% [code]
@@ -353,9 +353,8 @@ def fit(train_ds, epochs, test_ds):
             train_step(input_image, target, epoch)
         print()
 
-        if (epoch + 1) % LOOP_TO_SAVE == 0:
-            checkpoint_prefix = os.path.join(checkpoint_dir + str(epoch), "ckpt")
-            checkpoint.save(file_prefix=checkpoint_prefix)
+        checkpoint_prefix = os.path.join(checkpoint_dir + "_" + str(epoch))
+        checkpoint.save(file_prefix=checkpoint_prefix)
 
         print('Time taken for epoch {} is {} sec\n'.format(epoch + 1,
                                                            time.time() - start))
@@ -366,16 +365,16 @@ def fit(train_ds, epochs, test_ds):
 EPOCHS = 1000
 
 # %% [code]
-# fit(train_dataset, EPOCHS, test_dataset)
+fit(train_dataset, EPOCHS, test_dataset)
 
-print("restore ckpt")
+# print("restore ckpt")
 # # %% [code]
-checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
-#
-for example_input, example_target in test_dataset.take(5):
-    print(example_input.shape)
-    print(example_target.shape)
-    generate_images(generator, example_input, example_target)
+# checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
+# #
+# for example_input, example_target in test_dataset.take(5):
+#     print(example_input.shape)
+#     print(example_target.shape)
+#     generate_images(generator, example_input, example_target)
 
 # generator.save('ColorizationModelv1.h5')
 
