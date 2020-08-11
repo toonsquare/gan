@@ -136,11 +136,11 @@ def buildGenerator():
 
     return tf.keras.Model(inputs=inputs, outputs=x)
 
-@tf.function
+@tf.function()
 def generate_images_v2(model, test_input):
     prediction = model(test_input, training=False)
-    #PredictionImage = prediction.numpy()
-    PredictionImage = list(tf.data.Dataset.as_numpy_iterator(prediction))
+    PredictionImage = prediction.numpy()
+    # PredictionImage = list(tf.data.Dataset.as_numpy_iterator(prediction))
 
     # print(test_input[0].shape)
     # plt.imshow(test_input[0])
@@ -159,7 +159,7 @@ def generate_images_v2(model, test_input):
 global generator
 generator = buildGenerator()
 
-checkpoint_dir = "../model_pt/ckpt-100"
+checkpoint_dir = "../model/Sketch2Color_training_checkpoints_99"
 checkpoint = tf.train.Checkpoint(
     generator=generator
 )
