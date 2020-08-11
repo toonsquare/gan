@@ -97,7 +97,7 @@ def load_image_test(image_file):
 
 
 # %% [code]
-BATCH_SIZE = 5
+BATCH_SIZE = 50
 BUFFER_SIZE = 1000
 
 # %% [code]
