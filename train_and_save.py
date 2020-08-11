@@ -12,6 +12,9 @@ image_file = glob.glob('./data/train/*.png')
 IMG_WIDTH = 256
 IMG_HEIGHT = 256
 LOOP_TO_SAVE = 1
+EPOCHS = 50
+BATCH_SIZE = 200
+BUFFER_SIZE = 100
 
 # builder = tf.compat.v1.saved_model.builder.SavedModelBuilder('./model')
 # sess = tf.compat.v1.InteractiveSession()
@@ -66,7 +69,7 @@ def normalize(input_image, real_image):
 
 
 # %% [code]
-@tf.function()
+@tf.function
 def random_jitter(input_image, real_image):
     input_image, real_image = resize(input_image, real_image, 286, 286)
     input_image, real_image = random_crop(input_image, real_image)
@@ -98,8 +101,7 @@ def load_image_test(image_file):
 
 
 # %% [code]
-BATCH_SIZE = 100
-BUFFER_SIZE = 1000
+
 
 # %% [code]
 train_dataset = tf.data.Dataset.from_tensor_slices(image_file)
@@ -362,7 +364,7 @@ def fit(train_ds, epochs, test_ds):
 
 
 # %% [code]
-EPOCHS = 100
+
 
 # %% [code]
 fit(train_dataset, EPOCHS, test_dataset)
