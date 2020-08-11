@@ -139,8 +139,8 @@ def buildGenerator():
 @tf.function
 def generate_images_v2(model, test_input):
     prediction = model(test_input, training=False)
-    #PredictionImage = prediction.numpy()
-    PredictionImage = list(tf.data.Dataset.as_numpy_iterator(prediction))
+    PredictionImage = prediction.numpy()
+
 
     # print(test_input[0].shape)
     # plt.imshow(test_input[0])
@@ -164,6 +164,7 @@ checkpoint = tf.train.Checkpoint(
     generator=generator
 )
 checkpoint.restore(checkpoint_dir)
+generator.load_weights(checkpoint_dir)
 
 
 @app.route('/', methods=['POST'])
