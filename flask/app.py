@@ -40,8 +40,8 @@ def normalize(input_image):
     input_image = tf.cast(input_image, tf.float32)
     input_image = (input_image / 127.5) - 1
 
-
     return input_image
+
 
 def random_crop(input_image):
     stacked_image = tf.stack([input_image], axis=0)
@@ -49,7 +49,6 @@ def random_crop(input_image):
         stacked_image, size=[1, IMG_HEIGHT, IMG_WIDTH, 3])
 
     return cropped_image[0]
-
 
 
 def downsample(filters, size, shape, apply_batchnorm=True):
@@ -136,9 +135,9 @@ def buildGenerator():
 
     return tf.keras.Model(inputs=inputs, outputs=x)
 
-@tf.function()
+
 def generate_images_v2(model, test_input):
-    prediction = model(test_input, training=False)
+    prediction = model(test_input, training=True)
     PredictionImage = prediction.numpy()
     # PredictionImage = list(tf.data.Dataset.as_numpy_iterator(prediction))
 
@@ -147,7 +146,6 @@ def generate_images_v2(model, test_input):
     # plt.axis('off')
     # plt.savefig('test_input.png')
     # #
-    print(PredictionImage[0])
     plt.imshow(PredictionImage[0])
     plt.axis('off')
     plt.savefig('prediction_only.png')
@@ -159,11 +157,14 @@ def generate_images_v2(model, test_input):
 global generator
 generator = buildGenerator()
 
-checkpoint_dir = "../model/Sketch2Color_training_checkpoints_99"
+checkpoint_dir = "../model/Sketch2Color_training_checkpoints_99-100"
+# checkpoint_dir = "../model/ckpt-100"
+
 checkpoint = tf.train.Checkpoint(
     generator=generator
 )
-checkpoint.restore(checkpoint_dir)
+history = checkpoint.restore(checkpoint_dir)
+print(history)
 
 
 @app.route('/', methods=['POST'])
