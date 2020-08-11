@@ -159,7 +159,7 @@ def generate_images_v2(model, test_input):
 global generator
 generator = buildGenerator()
 
-checkpoint_dir = "../model/Sketch2Color_training_checkpoints_99"
+checkpoint_dir = "../model/Sketch2Color_training_checkpoints_99-100"
 checkpoint = tf.train.Checkpoint(
     generator=generator
 )
