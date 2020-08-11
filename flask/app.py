@@ -51,6 +51,7 @@ def random_crop(input_image):
     return cropped_image[0]
 
 
+
 def downsample(filters, size, shape, apply_batchnorm=True):
     initializer = tf.random_normal_initializer(0., 0.02)
 
@@ -137,7 +138,7 @@ def buildGenerator():
 
 
 def generate_images_v2(model, test_input):
-    prediction = model(test_input, training=True)
+    prediction = model(test_input, training=False)
     PredictionImage = prediction.numpy()
     # PredictionImage = list(tf.data.Dataset.as_numpy_iterator(prediction))
 

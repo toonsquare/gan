@@ -69,7 +69,7 @@ def normalize(input_image, real_image):
 
 
 # %% [code]
-@tf.function()
+@tf.function
 def random_jitter(input_image, real_image):
     input_image, real_image = resize(input_image, real_image, 286, 286)
     input_image, real_image = random_crop(input_image, real_image)
