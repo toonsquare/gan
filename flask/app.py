@@ -10,6 +10,10 @@ from io import BytesIO
 import numpy as np
 import glob
 
+gpus = tf.config.experimental.list_physical_devices('GPU')
+for gpu in gpus:
+    tf.config.experimental.set_memory_growth(gpu, True)
+
 np.set_printoptions(threshold=np.inf)
 
 BATCH_SIZE = 1
@@ -49,7 +53,6 @@ def random_crop(input_image):
         stacked_image, size=[1, IMG_HEIGHT, IMG_WIDTH, 3])
 
     return cropped_image[0]
-
 
 
 def downsample(filters, size, shape, apply_batchnorm=True):
@@ -139,7 +142,6 @@ def buildGenerator():
 
 def generate_images_v2(model, test_input):
     prediction = model(test_input, training=False)
-    PredictionImage = prediction.numpy()
     # PredictionImage = list(tf.data.Dataset.as_numpy_iterator(prediction))
 
     # print(test_input[0].shape)
@@ -147,7 +149,7 @@ def generate_images_v2(model, test_input):
     # plt.axis('off')
     # plt.savefig('test_input.png')
     # #
-    plt.imshow(PredictionImage[0])
+    plt.imshow(prediction[0] * 0.5 + 0.5)
     plt.axis('off')
     plt.savefig('prediction_only.png')
 
@@ -158,14 +160,15 @@ def generate_images_v2(model, test_input):
 global generator
 generator = buildGenerator()
 
-checkpoint_dir = "../model/Sketch2Color_training_checkpoints_99-100"
-# checkpoint_dir = "../model/ckpt-100"
-
+# checkpoint_dir = "../model/Sketch2Color_training_checkpoints_99-100"
+checkpoint_dir = "../model/ckpt-100"
 checkpoint = tf.train.Checkpoint(
     generator=generator
 )
-history = checkpoint.restore(checkpoint_dir)
-print(history)
+
+# generator.save('cmodel.h5')
+# history = checkpoint.restore(checkpoint_dir)
+new_model = tf.keras.models.load_model('cmodel.h5')
 
 
 @app.route('/', methods=['POST'])
@@ -182,8 +185,15 @@ def index():
         npimg = normalize(npimg)
 
         print(npimg.shape)
+
         # print(npimg)
-        base64 = generate_images_v2(generator, npimg)
+        test_jpg = tf.io.read_file('../test4.jpg')
+        test_jpg = tf.image.decode_jpeg(test_jpg)
+        # test_jpg = tf.image.resize(test_jpg, [256, 256], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+        test_jpg = tf.cast(test_jpg, tf.float32) / 127.5 - 1
+        test_jpg = tf.reshape(test_jpg, [1, 256, 256, 3])
+        print(test_jpg.shape)
+        base64 = generate_images_v2(new_model, test_jpg)
 
         base64 = ""
         return json_response(data_={
