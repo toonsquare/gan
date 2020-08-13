@@ -12,12 +12,16 @@ image_file = glob.glob('./data/train/*.png')
 IMG_WIDTH = 256
 IMG_HEIGHT = 256
 LOOP_TO_SAVE = 1
+EPOCHS = 50
+BATCH_SIZE = 50
+BUFFER_SIZE = 1000
 
 # builder = tf.compat.v1.saved_model.builder.SavedModelBuilder('./model')
 # sess = tf.compat.v1.InteractiveSession()
 
-checkpoint_dir = './Sketch2Color_training_checkpoints'
-last_checkpoint_dir = './Sketch2Color_training_checkpoints999'
+generated_image_dir = './generated/'
+checkpoint_dir = './models/Sketch2Color_training_checkpoints'
+last_checkpoint_dir = './model/Sketch2Color_training_checkpoints_99'
 checkpoint = tf.train.Checkpoint()
 
 
@@ -65,7 +69,7 @@ def normalize(input_image, real_image):
 
 
 # %% [code]
-@tf.function()
+@tf.function
 def random_jitter(input_image, real_image):
     input_image, real_image = resize(input_image, real_image, 286, 286)
     input_image, real_image = random_crop(input_image, real_image)
@@ -97,8 +101,7 @@ def load_image_test(image_file):
 
 
 # %% [code]
-BATCH_SIZE = 50
-BUFFER_SIZE = 1000
+
 
 # %% [code]
 train_dataset = tf.data.Dataset.from_tensor_slices(image_file)
@@ -289,7 +292,6 @@ generator_optimizer = tf.keras.optimizers.Adam(1e-4, beta_1=0.5)
 discriminator_optimizer = tf.keras.optimizers.Adam(1e-4, beta_1=0.5)
 
 # %% [code]
-checkpoint_dir = './Sketch2Color_training_checkpoints'
 checkpoint = tf.train.Checkpoint(generator_optimizer=generator_optimizer,
                                  discriminator_optimizer=discriminator_optimizer,
                                  generator=generator,
@@ -309,9 +311,7 @@ def generate_images(model, test_input, tar, epoch):
         plt.title(title[i])
         plt.imshow(display_list[i] * 0.5 + 0.5)
         plt.axis('off')
-
-    if (epoch + 1) % LOOP_TO_SAVE == 0:
-        plt.savefig('image_at_epoch_{:04d}.png'.format(epoch))
+        plt.savefig(generated_image_dir + 'image_at_epoch_{:04d}.png'.format(epoch))
 
 
 # %% [code]
@@ -339,18 +339,20 @@ def train_step(input_image, target, epoch):
 
 # %% [code]
 def fit(train_ds, epochs, test_ds):
+    print("BATCH : " + str(BATCH_SIZE) + " EPOCH :" + str(EPOCHS))
     for epoch in range(epochs):
         start = time.time()
+        print("Epoch: ", epoch)
 
         for example_input, example_target in test_ds.take(1):
             generate_images(generator, example_input, example_target, epoch)
-        print("Epoch: ", epoch)
 
         for n, (input_image, target) in train_ds.enumerate():
             print('.', end='')
             if (n + 1) % 100 == 0:
                 print()
             train_step(input_image, target, epoch)
+
         print()
 
         checkpoint_prefix = os.path.join(checkpoint_dir + "_" + str(epoch))
@@ -362,7 +364,7 @@ def fit(train_ds, epochs, test_ds):
 
 
 # %% [code]
-EPOCHS = 1000
+
 
 # %% [code]
 fit(train_dataset, EPOCHS, test_dataset)

@@ -12,7 +12,7 @@ import glob
 import base64
 
 
-
+# np.set_printoptions(threshold=np.inf)
 gpus = tf.config.experimental.list_physical_devices('GPU')
 for gpu in gpus:
     tf.config.experimental.set_memory_growth(gpu, True)
@@ -46,6 +46,7 @@ def normalize(input_image):
     input_image = (input_image / 127.5) - 1
 
     return input_image
+
 
 def random_crop(input_image):
     stacked_image = tf.stack([input_image], axis=0)
@@ -159,13 +160,18 @@ def generate_images_v2(model, test_input):
 global generator
 generator = buildGenerator()
 
-checkpoint_dir = "../model_pt/ckpt-100"
+# checkpoint_dir = "../model/Sketch2Color_training_checkpoints_99-100"
+checkpoint_dir = "../model/ckpt-100"
 checkpoint = tf.train.Checkpoint(
     generator=generator
 )
-checkpoint.restore(checkpoint_dir)
-generator.save('cmodel.h5')
+
+
+# generator.save('cmodel.h5')
+# history = checkpoint.restore(checkpoint_dir)
+# cpu 에서는 load_model이 안된다.
 new_model = tf.keras.models.load_model('cmodel.h5')
+
 
 @app.route('/', methods=['POST'])
 def index():
