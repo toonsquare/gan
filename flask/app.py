@@ -145,6 +145,7 @@ def generate_images_v2(model, test_input):
     PredictionImage = prediction.numpy()
     PredictionImage = PredictionImage[0]
 
+    #converting
     img = Image.fromarray(img.astype("uint8"))
 
     buff =BytesIO()
