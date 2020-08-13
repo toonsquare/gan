@@ -9,8 +9,13 @@ from PIL import Image
 from io import BytesIO
 import numpy as np
 import glob
+import base64
 
-np.set_printoptions(threshold=np.inf)
+
+
+gpus = tf.config.experimental.list_physical_devices('GPU')
+for gpu in gpus:
+    tf.config.experimental.set_memory_growth(gpu, True)
 
 BATCH_SIZE = 1
 BUFFER_SIZE = 1000
@@ -35,11 +40,10 @@ CORS = {
 OUTPUT_CHANNELS = 3
 
 
-# %% [code]
+# preprocess data
 def normalize(input_image):
     input_image = tf.cast(input_image, tf.float32)
     input_image = (input_image / 127.5) - 1
-
 
     return input_image
 
@@ -50,8 +54,7 @@ def random_crop(input_image):
 
     return cropped_image[0]
 
-
-
+#for using generator model
 def downsample(filters, size, shape, apply_batchnorm=True):
     initializer = tf.random_normal_initializer(0., 0.02)
 
@@ -136,24 +139,20 @@ def buildGenerator():
 
     return tf.keras.Model(inputs=inputs, outputs=x)
 
-@tf.function
+
 def generate_images_v2(model, test_input):
     prediction = model(test_input, training=False)
     PredictionImage = prediction.numpy()
+    PredictionImage = PredictionImage[0]
 
+    img = Image.fromarray(img.astype("uint8"))
 
-    # print(test_input[0].shape)
-    # plt.imshow(test_input[0])
-    # plt.axis('off')
-    # plt.savefig('test_input.png')
-    # #
-    print(PredictionImage[0])
-    plt.imshow(PredictionImage[0])
-    plt.axis('off')
-    plt.savefig('prediction_only.png')
+    buff =BytesIO()
+    img.save(buff, format = "PNG")
+    buff.seek(0)
+    base64_img = base64.b64encode(buff.getvalue()).decode("utf-8")
 
-    # todo base64 return
-    return "base64"
+    return base64_img
 
 
 global generator
@@ -164,8 +163,8 @@ checkpoint = tf.train.Checkpoint(
     generator=generator
 )
 checkpoint.restore(checkpoint_dir)
-generator.load_weights(checkpoint_dir)
-
+generator.save('cmodel.h5')
+new_model = tf.keras.models.load_model('cmodel.h5')
 
 @app.route('/', methods=['POST'])
 def index():
@@ -174,20 +173,25 @@ def index():
         upload = request.files['file']
         print(upload.filename)
         upload_data = upload.read()
-        # print(upload_data)
+
         img = Image.open(BytesIO(upload_data))
         npimg = np.array(img)
         npimg = np.reshape(npimg, ((1, 256, 256, 3)))
         npimg = normalize(npimg)
 
-        print(npimg.shape)
-        # print(npimg)
-        base64 = generate_images_v2(generator, npimg)
+        test_jpg = tf.io.read_file('../test4.jpg')
+        test_jpg = tf.image.decode_jpeg(test_jpg)
+        # test_jpg = tf.image.resize(test_jpg, [256, 256], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+        test_jpg = tf.cast(test_jpg, tf.float32) / 127.5 - 1
+        test_jpg = tf.reshape(test_jpg, [1, 256, 256, 3])
+        print(test_jpg.shape)
+        result = generate_images_v2(new_model, test_jpg)
 
-        base64 = ""
+#       result = ""
         return json_response(data_={
-            "base64": base64
+            "result": result
         }, headers_=CORS)
+
 
 
 if __name__ == '__main__':
